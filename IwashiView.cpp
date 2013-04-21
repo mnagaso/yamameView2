@@ -35,8 +35,8 @@ using std::endl;
 #define data_length 10000
 #define sampling_rate 0.00000001
 
-#define x_steps 41
-#define y_steps 158
+#define x_steps 158
+#define y_steps 41
 #define filenum x_steps * y_steps
 
 #define sonicvelo 1500 //onsoku m/s
@@ -214,11 +214,11 @@ void makeArray()
 {
 	int count = 0;
 
-	for( int i = 0; i < x_steps; i++)
-		for( int j = 0; j < y_steps; j++)
+	for( int i = 0; i < y_steps; i++)
+		for( int j = 0; j < x_steps; j++)
 		{
 			//readOnly(i, j, count);
-			readAndHilbert(i, j, count);
+			readAndHilbert(j, i, count);
 
 			count++;
 		}
@@ -259,21 +259,38 @@ void setColor(double incol, double lancol)
 
 void Draw2d()
 {
-	int filecount = sub_x * x_steps + sub_y;
+	int filecount = sub_y * x_steps + sub_x;
 
 	double scale_time = data_length * sampling_rate;
 	double scale_amp = colorlange;
+	double y_min, y_max;
 	glPointSize(1.0);
 	glBegin(GL_POINTS);
 	for(int i = 0; i < data_length; i++){
-		GLdouble y_point = dataview[filecount][i][0] / scale_time * 10;
-		GLdouble x_point = dataview[filecount][i][1] / colorlange;
+		//GLdouble y_point = dataview[filecount][i][0] / scale_time * 10;
+		GLdouble x_point = makeDistance(dataview[filecount][i][0]);
+		GLdouble y_point = dataview[filecount][i][1] / colorlange * 100;
+		double distance = makeDistance(dataview[filecount][i][0]);
 
-		glColor3f(1.0, 1.0, 1.0);
-		glVertex2d(x_point, y_point);
+		if(	distance > z_front && distance < z_back )
+		{
+			glColor3f(1.0, 1.0, 1.0);
+			glVertex2d(x_point, y_point);
+
+			if(y_point > y_max)
+				y_max = distance;
+			if(y_point < y_min)
+				y_min = distance;
+		}
 	}
-
 	glEnd();
+
+	glBegin(GL_LINES);
+	glColor3f(1.0, 0.0, 0.0);
+	glVertex2d(z_front, threshold * 100);
+	glVertex2d(z_back, threshold * 100);
+	glEnd();
+
 }
 
 void Draw3d()
@@ -282,8 +299,10 @@ void Draw3d()
 	glBegin(GL_POINTS);
 	for( int i = 0; i < filenum; i++)
 	{
-		GLdouble x_point = int( i / y_steps) ;
-		GLdouble y_point = i % y_steps;
+		GLdouble y_point = int( i / x_steps);
+		GLdouble x_point = i % x_steps;
+
+
 		for(int j = 0; j < data_length; j++)
 		{
 			GLdouble z_point = makeDistance(dataview[i][j][0]);
@@ -305,6 +324,7 @@ void Draw3d()
 	}
 
 	glEnd();
+
 	//cout << z_begin << "  " << z_end << endl;
 }
 
@@ -315,7 +335,7 @@ void display()
 
 	glPushMatrix();
 	gluLookAt( 0.0, 0.0, 300.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-	glRotatef( 90.0, 0.0, 0.0, 1.0);
+	//glRotatef( 90.0, 0.0, 0.0, 1.0);
 	glRotatef( rot_deg, rot_axs_x, rot_axs_y, rot_axs_z);
 	glTranslated( -1 * x_steps / 2, -1 * y_steps / 2, 0.0);
 
@@ -323,7 +343,7 @@ void display()
 	glMultMatrixf( rotary );
 
 	//Draw2d();
-		Draw3d();
+	Draw3d();
 	glPopMatrix();
 
 	glutSwapBuffers();
@@ -423,11 +443,12 @@ void display2()
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glPushMatrix();
-	gluLookAt( 0.0, 0.0, 20.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-	glRotatef( 90.0, 0.0, 0.0, 1.0);
-	glTranslated(0.0, -5.0, 0.0);
+	gluLookAt( 0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	//glRotatef( 90.0, 0.0, 0.0, 1.0);
+	//glRotatef( 180.0, 0.0, 1.0, 0.0);
+	glTranslated(0.0, 0.0, 0.0);
 
-	glTranslatef(0.0, trans_ary_sub[0], trans_aryZ_sub[0]);
+	glTranslatef(trans_ary_sub[0], 0.0, trans_aryZ_sub[0]);
 
 	Draw2d();
 
@@ -627,11 +648,11 @@ int main(int argc, char *argv[])
 	GLUI_EditText *segment_edittext_sub_x =
 			glui->add_edittext( "sub_x", GLUI_EDITTEXT_INT, &sub_x);
 	segment_edittext_sub_x->set_int_limits(0.0, x_steps, GLUI_LIMIT_CLAMP);
-	segment_edittext_sub_x->set_int_val(99);
+	segment_edittext_sub_x->set_int_val(70);
 	GLUI_EditText *segment_edittext_sub_y =
 				glui->add_edittext( "sub_y", GLUI_EDITTEXT_INT, &sub_y);
 		segment_edittext_sub_y->set_int_limits(0.0, y_steps, GLUI_LIMIT_CLAMP);
-		segment_edittext_sub_y->set_int_val(99);
+		segment_edittext_sub_y->set_int_val(20);
 	GLUI_Translation *translation_x_sub = glui->add_translation( "TranslationX", GLUI_TRANSLATION_X, trans_ary_sub);
 		translation_x_sub->set_speed( 0.5 );
 	GLUI_Translation *translation_z_sub = glui->add_translation( "TranslationZ", GLUI_TRANSLATION_Z, trans_aryZ_sub);
