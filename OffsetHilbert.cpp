@@ -24,7 +24,7 @@ OffsetHilbert::OffsetHilbert(double data_in[data_length] )
 
 	readData( data_in);
 	average = calcAverage();
-	//offset();
+	offset();
 
 	int flag = -1;
 	FFT(flag);
@@ -65,12 +65,16 @@ double OffsetHilbert::calcAverage()
 
 void OffsetHilbert::offset()
 {
+	/*
 	if( average >= 0)
 		for( int i = 0; i < data_length; i++)
 			data[i] -= average;
 	else
 		for( int i = 0; i < data_length; i++)
 			data[i] += average;
+	*/
+	for( int i = 0; i < data_length; i++)
+		data[i] -= average;
 }
 
 void OffsetHilbert::FFT( int flag)
