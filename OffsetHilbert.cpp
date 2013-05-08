@@ -24,7 +24,7 @@ OffsetHilbert::OffsetHilbert(double data_in[data_length] )
 
 	readData( data_in);
 	average = calcAverage();
-	offset();
+	//offset();
 
 	int flag = -1;
 	FFT(flag);
@@ -60,7 +60,7 @@ double OffsetHilbert::calcAverage()
 	for( int i = offset_sample_start; i < offset_sample_end ; i++)
 			temp_sum += data[i];
 
-	return temp_sum / data_length;
+	return temp_sum / (offset_sample_end - offset_sample_start);
 }
 
 void OffsetHilbert::offset()

@@ -30,13 +30,44 @@ using std::endl;
 #include "OffsetHilbert.h"
 
 //#define filepath "./data/"
-#define filepath "/var/run/media/nagaso/sotoHD/iwana/1/"
+#define filepath "/var/run/media/nagaso/sotoHD/iwana/2/"
+//#define filepath "/var/run/media/nagaso/sotoHD/yamame/1/"
 #define data_width 2
 #define data_length 10000
 #define sampling_rate 0.00000001
 
-#define x_steps 158
-#define y_steps 41
+//iwana1
+//#define x_steps 158
+//#define y_steps 41
+//iwana2
+#define x_steps 157
+#define y_steps 35
+//iwana3
+//#define x_steps 137
+//#define y_steps 29
+//iwana4
+//#define x_steps 158
+//#define y_steps 41
+//iwana5
+//#define x_steps 154
+//#define y_steps 33
+//iwana11
+//#define x_steps 141
+//#define y_steps 31
+
+//yamame1
+//#define x_steps 131
+//#define y_steps 32
+//yamame2
+//#define x_steps 158
+//#define y_steps 41
+//yamame3
+//#define x_steps 158
+//#define y_steps 41
+//yamame4
+//#define x_steps 158
+//#define y_steps 41
+
 #define filenum x_steps * y_steps
 
 #define sonicvelo 1500 //onsoku m/s
@@ -84,6 +115,8 @@ int sub_x;
 int sub_y;
 float trans_ary_sub[] = {0.0};
 float trans_aryZ_sub[] = {0.0};
+float brightness;
+int pointsize = 1;
 
 double getmaxvol()
 {
@@ -188,7 +221,7 @@ void readAndHilbert(int xs, int ys, int count)
 		dataview[count][k][0] = test.data[k][0];
 		dataview[count][k][1] = test2.data2[k][1];
 		//dataview[count][k][1] = test2.data2[k][1] / ratio;
-		if(xs == 0 && ys == 15)
+		if(xs == 42 && ys == 18)
 			cout << dataview[count][k][1] << endl;
 	}
 }
@@ -204,10 +237,10 @@ void calcImpedance()
 		{
 			imp = -1 * (dataview[i][j][1] + Sig_ini) / (dataview[i][j][1] - Sig_ini) * impWater;
 			dataview[i][j][1] = imp;
+
+			if(i == 1000)
+				cout << "imp " << imp << endl;
 		}
-
-
-
 }
 
 void makeArray()
@@ -241,6 +274,7 @@ void setColor(double incol, double lancol)
 	//double geta = 0.3;
 	//monocolor
 	//lancol = 0.02;
+	lancol *= brightness;
 
 	R = incol / lancol;
 	G = incol / lancol;
@@ -295,7 +329,7 @@ void Draw2d()
 
 void Draw3d()
 {
-	glPointSize(1.0);
+	glPointSize(pointsize);
 	glBegin(GL_POINTS);
 	for( int i = 0; i < filenum; i++)
 	{
@@ -315,7 +349,7 @@ void Draw3d()
 					&& z_point < z_back
 					)
 			{
-				setColor( dataview[i][j][1], threshold * colorlange);
+				setColor( dataview[i][j][1], colorlange);
 				if(x_point == sub_x && y_point == sub_y)
 					glColor3f(1.0, 0.0, 0.0);
 				glVertex3d(x_point, y_point, z_point);
@@ -423,7 +457,7 @@ void resize( GLsizei w, GLsizei h)
 
 void Init()
 {
-	glutInitWindowPosition(100,100);
+	glutInitWindowPosition(0,0);
 	glutInitWindowSize(1000,1000);
 }
 
@@ -476,7 +510,7 @@ void resize2( GLsizei w, GLsizei h)
 
 void Init2()
 {
-	glutInitWindowPosition(1000,100);
+	glutInitWindowPosition(1000,0);
 	glutInitWindowSize(800,500);
 }
 void callBacks2()
@@ -589,7 +623,7 @@ int main(int argc, char *argv[])
 	Init2();
 	WinID[WindowNum] = glutCreateWindow(WindowName[WindowNum]);
 	callBacks2();
-	WinFlag[WindowNum]=1;
+	WinFlag[WindowNum] = 1;
 	WindowNum=WindowNum+1;
 
 	glutIdleFunc(idle);
@@ -643,6 +677,14 @@ int main(int argc, char *argv[])
 			glui->add_edittext( "z_max", GLUI_EDITTEXT_FLOAT, &z_back);
 	segment_edittext_zmax->set_float_limits( 0.0, 100.0, GLUI_LIMIT_CLAMP);
 	segment_edittext_zmax->set_float_val(28);
+	GLUI_EditText *segment_edittext_brightness =
+				glui->add_edittext( "brightness", GLUI_EDITTEXT_FLOAT, &brightness);
+		segment_edittext_brightness->set_float_limits( 0.0, 1.0, GLUI_LIMIT_CLAMP);
+		segment_edittext_brightness->set_float_val(0.04);
+	GLUI_EditText *segment_edittext_point =
+				glui->add_edittext( "point size", GLUI_EDITTEXT_INT, &pointsize);
+		segment_edittext_point->set_int_limits( 0, 10000, GLUI_LIMIT_CLAMP);
+		segment_edittext_point->set_int_val(1);
 
 	glui->add_separator();
 	GLUI_EditText *segment_edittext_sub_x =

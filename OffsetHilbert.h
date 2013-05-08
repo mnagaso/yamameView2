@@ -16,9 +16,9 @@ class OffsetHilbert
 public:
 	const static int data_width = 2;
 	const static int data_length = 10000;
-	const static int file_num = 4192;
-	const static int offset_sample_start = 2000;
-	const static int offset_sample_end = 3000;
+	//const static int file_num = 4192;
+	const static int offset_sample_start = 5500;
+	const static int offset_sample_end = 6500;
 	double data[data_length];
 	//double data[data_length][data_width];
 	double data2[data_length][data_width];
