@@ -28,6 +28,7 @@ using std::endl;
 
 #include "ReadCSV.h"
 #include "OffsetHilbert.h"
+#include "ExtractSurface.h"
 
 //#define filepath "./data/"
 #define filepath "/var/run/media/nagaso/sotoHD/iwana/2/"
@@ -77,7 +78,10 @@ using std::endl;
 vector<direct *> entries;
 
 double dataview[filenum][data_length][data_width];
+int surfaceflag[x_steps][y_steps][10];
 double colorlange;
+int reftimebottom;
+int peak_place[100];
 #define headerchangenum 1 //the x axe number one before header name changes
 #define threshold spinnerValf
 
@@ -162,6 +166,21 @@ double gettimemin()
 	return volmin;
 }
 
+int gettimebottom()
+{
+	double valmax = 0;
+	int timebottom = 0;
+
+	for( int i = 0; i < data_length; i++)
+		if( dataview[0][i][1] > valmax)
+		{
+			valmax = dataview[0][i][1];
+			timebottom = i;
+		}
+
+	return timebottom;
+}
+
 double makeDistance( double time )
 {
 	return time * sonicvelo * 1000 / 2;
@@ -210,10 +229,7 @@ void readAndHilbert(int xs, int ys, int count)
 		temp[k] = test.data[k][1];
 
 	OffsetHilbert test2(temp);
-	if(xs == 0 && ys == 0){
-	cout << "testing OffsetHilbert..."
-		<< endl;
-	}
+
 
 	//double ratio = matchingAmpFunc(temp, test2.data2);
 
@@ -221,8 +237,14 @@ void readAndHilbert(int xs, int ys, int count)
 		dataview[count][k][0] = test.data[k][0];
 		dataview[count][k][1] = test2.data2[k][1];
 		//dataview[count][k][1] = test2.data2[k][1] / ratio;
-		if(xs == 42 && ys == 18)
+		if(xs == 0 && ys == 0)
 			cout << dataview[count][k][1] << endl;
+	}
+
+	if(xs == 0 && ys == 0){
+			cout << "testing OffsetHilbert..."
+					<< endl;
+			reftimebottom = gettimebottom();
 	}
 }
 
@@ -243,6 +265,21 @@ void calcImpedance()
 		}
 }
 
+void extractSurface(int x, int y, int count)
+{
+	double temp[data_length];
+	for( int i = 0; i < data_length; i++)
+		temp[i] = dataview[count][i][1];
+
+	ExtractSurface ES(reftimebottom, temp);
+
+	for( int i = 0; i < 100; i++)
+		peak_place[i] = 0;
+
+	for( int i = 0; i < ES.peak_num; i++)
+		peak_place[i] = ES.peak_place[i];
+}
+
 void makeArray()
 {
 	int count = 0;
@@ -252,7 +289,7 @@ void makeArray()
 		{
 			//readOnly(i, j, count);
 			readAndHilbert(j, i, count);
-
+			//extractSurface(i, j, count);
 			count++;
 		}
 	z_begin = makeDistance(0);
@@ -298,6 +335,10 @@ void Draw2d()
 	double scale_time = data_length * sampling_rate;
 	double scale_amp = colorlange;
 	double y_min, y_max;
+	int peak_count;
+
+	extractSurface(sub_x, sub_y, filecount);
+
 	glPointSize(1.0);
 	glBegin(GL_POINTS);
 	for(int i = 0; i < data_length; i++){
@@ -309,6 +350,12 @@ void Draw2d()
 		if(	distance > z_front && distance < z_back )
 		{
 			glColor3f(1.0, 1.0, 1.0);
+
+			if( i == peak_place[peak_count])
+			{
+				glColor3f(1.0, 0.0, 0.0);
+				peak_count++;
+			}
 			glVertex2d(x_point, y_point);
 
 			if(y_point > y_max)
@@ -352,6 +399,14 @@ void Draw3d()
 				setColor( dataview[i][j][1], colorlange);
 				if(x_point == sub_x && y_point == sub_y)
 					glColor3f(1.0, 0.0, 0.0);
+				//in this part,  change the color of surface point
+				//if(j == surfaceflag[x_point][y_point][flagnum == 0 need to make loop for flag num])
+				//    glColor3f(,,);
+				//
+				//
+				//
+				//
+				//
 				glVertex3d(x_point, y_point, z_point);
 			}
 		}
