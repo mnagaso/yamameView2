@@ -14,21 +14,23 @@ public:
 	const static int data_length = 10000;
 	const static int sample_start = 1138;
 	double data_sample[data_length];
-	int mountain_place[100][2];//[mountain_num][in or out]
-	int mountain_num;
-	int peak_num;
-	int peak_place[100];
-	int sample_end;
-	double threshold;
+	int mountain_place[10000][2];//[mountain_num][in or out]
+	int point_status[10000];
+	int mountain_num = 0;
+	int peak_num = 0;
+	int peak_place[10000];
+	int sample_end = 0;
+	double threshold = 0.0;
 	const static int offset_sample_start = 5500;
 	const static int offset_sample_end = 6500;
-	int times = 3; //multiple num of noise lever(average)for make threshold
+	int times = 0; //multiple num of noise lever(average)for make threshold
 
-	ExtractSurface(int timebottom, double data[data_length]);
+	ExtractSurface(int timebottom, double data[data_length], int mult_times);
 	void resetData(double data_in[data_length]);
 	void findMountain();
 	void extractPeak();
 	double calcAverage();
+	void init();
 private:
 	double average;
 };
