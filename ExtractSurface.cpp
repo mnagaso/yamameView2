@@ -12,7 +12,7 @@ using std::endl;
 #include "ExtractSurface.h"
 
 
-ExtractSurface::ExtractSurface( int timebottom, double data[data_length], int mult_times)
+ExtractSurface::ExtractSurface( int timebottom, double data[data_length], int mult_times, int mountainWidth, int mountPeakNum)
 : sample_end( timebottom )
 {
 	resetData(data);
@@ -20,10 +20,14 @@ ExtractSurface::ExtractSurface( int timebottom, double data[data_length], int mu
 	average = calcAverage();
 	times = mult_times;
 	threshold = average * times;
-
+	mountainWidthThre = mountainWidth;
+	peakNum = mountPeakNum;
 	init();
 	findMountain();
+	mountainWidthThreshold();
+	mountainNumbering();
 	extractPeak();
+	eraceNoisePeak();
 	//cout << "";
 }
 
@@ -43,24 +47,54 @@ void ExtractSurface::findMountain()
 		else
 			point_status[i] = 0;
 	}
-
+}
+void ExtractSurface::mountainNumbering()
+{
 	int mountain_count = 0;
-	for( int i = sample_start; i < sample_end; i++)
+		for( int i = sample_start; i < sample_end; i++)
+		{
+			if(point_status[i] == 1 && point_status[i - 1] == 0)
+			{
+				mountain_place[mountain_count][0] = i;
+			}
+			else if( point_status[i] == 0 && point_status[i - 1] == 1)
+			{
+				mountain_place[mountain_count][1] = i;
+				mountain_count++;
+			}
+			else if(i + 1 == sample_end && point_status[i] == 1)
+			{
+				mountain_place[mountain_count][1] = i;
+				mountain_count++;
+			}
+		}
+		mountain_num = mountain_count;
+}
+
+void ExtractSurface::mountainWidthThreshold()
+{
+	int mountainflag_count = 0;
+	for( int i = sample_start; i < data_length; i++)
 	{
 		if(point_status[i] == 1 && point_status[i - 1] == 0)
-			mountain_place[mountain_count][0] = i;
-		else if( point_status[i] == 0 && point_status[i - 1] == 1)
 		{
-			mountain_place[mountain_count][1] = i;
-			mountain_count++;
+			mountainflag_count++;
 		}
-		else if(i + 1 == sample_end && point_status[i] == 1)
+		else if(point_status[i] == 1 && point_status[i - 1] == 1)
+			mountainflag_count++;
+		else if(point_status[i] == 0 && point_status[i - 1] == 1)
 		{
-			mountain_place[mountain_count][1] = i;
-			mountain_count++;
+			if(mountainflag_count > mountainWidthThre)
+				mountainflag_count = 0;
+			else
+			{
+				for( int j = 1; j <= mountainflag_count; j++)
+					point_status[i - j] = 0;
+				mountainflag_count = 0;
+			}
 		}
+
 	}
-	mountain_num = mountain_count;
 }
 
 void ExtractSurface::extractPeak()
@@ -79,6 +113,30 @@ void ExtractSurface::extractPeak()
 			}
 
 	peak_num = peak_count;
+}
+
+void ExtractSurface::eraceNoisePeak()
+{
+	if( mountain_num != 0)
+	{
+		for( int i = 0; i < mountain_num; i++)
+		{
+			int peak_count = 0;
+			int peak_place[100] = {0};
+			for( int j = mountain_place[i][0]; j < mountain_place[i][1]; j++)
+			{
+				if( point_status[j] == 2)
+				{
+					peak_place[peak_count] = j;
+					peak_count++;
+
+				}
+			}
+			if( peak_count <= peakNum)
+				for(int j = 0; j < peak_count; j++)
+					point_status[peak_place[j]] = 1;
+		}
+	}
 }
 
 double ExtractSurface::calcAverage()
