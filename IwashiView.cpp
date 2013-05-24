@@ -29,45 +29,67 @@ using std::endl;
 #include "ReadCSV.h"
 #include "OffsetHilbert.h"
 #include "ExtractSurface.h"
+#include "InitialSettingWR.h"
 
 //#define filepath "./data/"
 #define filepath "/var/run/media/nagaso/sotoHD/iwana/2/"
 //#define filepath "/var/run/media/nagaso/sotoHD/yamame/1/"
+//#define filepath "/var/run/media/nagaso/sotoHD/rotate2/"
+//#define filepath "/var/run/media/nagaso/sotoHD/rotato/"
 #define data_width 2
 #define data_length 10000
 #define sampling_rate 0.00000001
 
 //iwana1
+//#define fishname "iwana1"
 //#define x_steps 158
 //#define y_steps 41
 //iwana2
+#define fishname "iwana2"
 #define x_steps 157
 #define y_steps 35
 //iwana3
+//#define fishname "iwana3"
 //#define x_steps 137
 //#define y_steps 29
 //iwana4
+//#define fishname "iwana4"
 //#define x_steps 158
 //#define y_steps 41
 //iwana5
+//#define fishname "iwana5"
 //#define x_steps 154
 //#define y_steps 33
 //iwana11
+//#define fishname "iwana11"
 //#define x_steps 141
 //#define y_steps 31
 
 //yamame1
+//#define fishname "yamame1"
 //#define x_steps 131
 //#define y_steps 32
 //yamame2
+//#define fishname "yamame2"
 //#define x_steps 158
 //#define y_steps 41
 //yamame3
+//#define fishname "yamame3"
 //#define x_steps 158
 //#define y_steps 41
 //yamame4
+//#define fishname "yamame4"
 //#define x_steps 158
 //#define y_steps 41
+
+//rotate2
+//#define fishname "rotate2"
+//#define x_steps 21
+//#define y_steps 76
+//rotate
+//#define fishname "rotato"
+//#define x_steps 16
+//#define y_steps 156
 
 #define filenum x_steps * y_steps
 
@@ -79,6 +101,7 @@ vector<direct *> entries;
 
 double dataview[filenum][data_length][data_width];
 int point_status_3D[filenum][10000];// peak( ==2), mountain(==1), under thre(==0)
+double integlatedpeakval[filenum];
 int visualize_point[filenum] = {0};// numbers of peaks which are indicated
 int mountain[filenum][10000][2];
 int viewchanged_flag = 0;
@@ -149,7 +172,7 @@ double getmaxvol()
 			volmax = dataview[0][j][1];
 	}
 
-
+	cout << "max vol is " << volmax << endl;
 	return volmax;
 }
 double gettimemax()
@@ -234,6 +257,7 @@ double matchingAmpFunc(double data0[data_length], double (*data1)[data_width])
 
 void readAndHilbert(int xs, int ys, int count)
 {
+
 	bool headerflag = 0;
 	string filename = entries[count]->d_name;
 	//cout << "writing file name..." << filename << endl;
@@ -261,6 +285,7 @@ void readAndHilbert(int xs, int ys, int count)
 					<< endl;
 			reftimebottom = gettimebottom(); //get the distance to the mounting board from 0,0 data signal
 	}
+	//cout << count << endl;
 }
 
 void calcImpedance()
@@ -298,7 +323,7 @@ void extractSurface(int x, int y, int count, int point_status[])
 		peak_threshold = ES.threshold;
 	}
 
-	for(int i = 0; i < 10000; i++)
+	for(int i = 0; i < 10000; i++) //memo mountain_place
 	{
 		for(int j = 0; j < 2; j++)
 		{
@@ -308,6 +333,7 @@ void extractSurface(int x, int y, int count, int point_status[])
 				mountain[count][i][j] = 0;
 		}
 	}
+
 }
 
 bool triDistinguish(double x1, double x2, double x3, double y1, double y2, double y3, double z1, double z2, double z3)
@@ -385,6 +411,31 @@ void outlierOmit(int points[filenum][10000])
 	}
 }
 
+double calcIntegration(int pointnum)
+{
+	int peak_point =0;
+	int peakcount = 0;
+	for(int i = 0; i < 10000; i++)
+		if(point_status_3D[pointnum][i] == 2)
+		{
+			if(peakcount == visualize_point[pointnum]){
+				peak_point = i;
+			}
+			peakcount++;
+		}
+
+	double integratedVal = 0;
+	for(int i = 0; i < 10000; i++)
+		if( mountain[pointnum][i][0] <= peak_point && mountain[pointnum][i][1] >= peak_point)
+		{
+			for( int j = mountain[pointnum][i][0]; j < mountain[pointnum][i][1]; j++)
+					integratedVal += dataview[pointnum][j][1];
+			break;
+		}
+
+	return integratedVal;
+}
+
 void makeArray()
 {
 	int count = 0;
@@ -440,7 +491,7 @@ void tri_color(GLdouble a1, GLdouble a2, GLdouble a3)
 	R = ave / colorlange;
 	G = ave / colorlange;
 	B = ave / colorlange;
-
+	//cout << "R G B " << R << " "<< G << " "<< B << " "<< ave << " "<< colorlange << endl;
 	if(R >= 1.0)
 		R = 1.0;
 	if(G >= 1.0)
@@ -545,7 +596,14 @@ void Draw3d()
 		glBegin(GL_POINTS);
 		for( int i = 0; i < filenum; i++)
 		{
-			GLdouble y_point = int( i / x_steps);
+			double y_measure;
+			if(fishname != "rotato" && fishname != "rotate2")
+				y_measure = 1.0;
+			else if( fishname == "rotato")
+				y_measure = 0.1;
+			else
+				y_measure = 0.2;
+			GLdouble y_point = int( i / x_steps) * y_measure;
 			GLdouble x_point = i % x_steps;
 
 			if( radiobuttonVal == 0) //point view
@@ -563,6 +621,7 @@ void Draw3d()
 							&& z_point < z_back
 						)
 					{
+
 						setColor( dataview[i][j][1], colorlange);
 						if(x_point == sub_x && y_point == sub_y)
 							glColor3f(1.0, 0.0, 0.0);
@@ -614,7 +673,8 @@ void Draw3d()
 							&& z_point < z_back
 							)
 						{
-							setColor( dataview[i][j][1], colorlange);
+							double integCol = calcIntegration(i);
+							setColor( integCol, colorlange);
 							if(x_point == sub_x && y_point == sub_y)
 								glColor3f(1.0, 0.0, 0.0);
 
@@ -657,8 +717,9 @@ void Draw3d()
 						v.y = y_point;
 						vertices.insert(v);
 
+
 						zpoint[i] = makeDistance(dataview[i][j][0]);
-						zamp[i] = makeDistance(dataview[i][j][1]);
+						zamp[i] = calcIntegration(i);;
 						top_point_count++;
 					}
 				}
@@ -686,13 +747,16 @@ void Draw3d()
 			if(z1 != 0 && z2 != 0 && z3 != 0)
 			{
 				if(triDistinguish(x1,x2,x3,y1,y2,y3,z1,z2,z3) == 0){
-					tri_color(amp1, amp2, amp3);
+					//tri_color(amp1, amp2, amp3);
 
 					if( viewchanged_flag == 3)
 					{
 						glBegin(GL_TRIANGLES);
+						setColor(amp1, colorlange);
 						glVertex3d(x1, y1, z1);
+						setColor(amp2, colorlange);
 						glVertex3d(x2, y2, z2);
+						setColor(amp3, colorlange);
 						glVertex3d(x3, y3, z3);
 						glEnd();
 					}
@@ -996,18 +1060,45 @@ void viewchange_callback(int val)
 	//viewchanged_flag = 1;
 	cout << "peak_place list has changed" << endl;
 
-
+	GLUI_Master.sync_live_all();
 }
 
 void modifyPeak_callback(int val)
 {
-	int modfilenum = sub_x + sub_y * x_steps;
+	//int modfilenum = sub_x + sub_y * x_steps;
 
-	if(visualize_point[modfilenum] != addPeakNum)
-			visualize_point[modfilenum] = addPeakNum;
+	//if(visualize_point[modfilenum] != addPeakNum)
+			//visualize_point[modfilenum] = addPeakNum;
 
 	viewchange_callback(radiobuttonVal);
 
+}
+
+void settingWR_callback( int val)
+{
+	if(val == 0)
+	{
+		InitialSettingWR W(val, x_begin, x_end, y_begin, y_end, z_front, z_back, mountainWidth, mountainPeakNum, tri_threshold, tri_length, filenum, visualize_point, fishname);
+	}
+	else
+	{
+		InitialSettingWR R(val, x_begin, x_end, y_begin, y_end, z_front, z_back, mountainWidth, mountainPeakNum, tri_threshold, tri_length, filenum, visualize_point, fishname);
+		x_begin = R.xs;
+		x_end = R.xe;
+		y_begin = R.ys;
+		y_end = R.ye;
+		z_front = R.zs;
+		z_back = R.ze;
+		mountainWidth = R.mounWid;
+		mountainPeakNum = R.peakNum;
+		tri_threshold = R.tri_thre;
+		tri_length = R.tri_leng;
+		for(int i = 0; i < filenum; i++)
+			visualize_point[i] = R.v_point[i];
+
+		//viewchange_callback(radiobuttonVal);
+		GLUI_Master.sync_live_all();
+	}
 }
 
 int main(int argc, char *argv[])
@@ -1093,7 +1184,7 @@ int main(int argc, char *argv[])
 	segment_edittext_zmax->set_float_val(35);
 	GLUI_EditText *segment_edittext_brightness =
 				glui->add_edittext( "brightness", GLUI_EDITTEXT_FLOAT, &brightness);
-		segment_edittext_brightness->set_float_limits( 0.0, 1.0, GLUI_LIMIT_CLAMP);
+		segment_edittext_brightness->set_float_limits( 0.0, 1000.0, GLUI_LIMIT_CLAMP);
 		segment_edittext_brightness->set_float_val(0.04);
 	GLUI_EditText *segment_edittext_point =
 				glui->add_edittext( "point size", GLUI_EDITTEXT_INT, &pointsize);
@@ -1145,13 +1236,14 @@ int main(int argc, char *argv[])
 	glui->add_separator();
 	//modification panels
 	GLUI_EditText *segment_edittext_addpoint =
-			glui2->add_edittext( "add peak num for visualizing", GLUI_EDITTEXT_INT, &addPeakNum);
+			glui2->add_edittext( "add peak num for visualizing", GLUI_EDITTEXT_INT, &visualize_point[sub_x + sub_y * x_steps], 0, modifyPeak_callback);
 		segment_edittext_addpoint->set_int_limits(0, 100, GLUI_LIMIT_CLAMP);
 		segment_edittext_addpoint->set_int_val(0);
 
 
-	glui2->add_button("change", 0, modifyPeak_callback);
-
+	//glui2->add_button("change", 0, modifyPeak_callback);
+	glui2->add_button("setting write", 0, settingWR_callback);
+	glui2->add_button("setting read", 1, settingWR_callback);
 
 	glui->add_button("Exit", 0, gluiCallback);
 

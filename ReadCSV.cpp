@@ -34,6 +34,8 @@ using std::string;
 #define sonicvelo 1500 //onsoku m/s
 #define filepath "/var/run/media/nagaso/sotoHD/iwana/2/" //"./data/"
 //#define filepath "/var/run/media/nagaso/sotoHD/yamame/1/"
+//#define filepath "/var/run/media/nagaso/sotoHD/rotate2/"
+//#define filepath "/var/run/media/nagaso/sotoHD/rotato/"
 //#define filepath "./data/"
 
 ReadCSV::ReadCSV( const string &fn, int xstep, int ystep, bool flag)
