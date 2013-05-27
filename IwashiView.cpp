@@ -100,9 +100,10 @@ using std::endl;
 vector<direct *> entries;
 
 double dataview[filenum][data_length][data_width];
-int point_status_3D[filenum][10000];// peak( ==2), mountain(==1), under thre(==0)
+int point_status_3D[filenum][10000];// secondpeak( == 3), peak( ==2), mountain(==1), under thre(==0)
 //double integlatedpeakval[filenum];
 int visualize_point[filenum] = {0};// numbers of peaks which are indicated
+int visualize_point_second[filenum] = {0};// numbers of second surface peaks which are indicated
 int mountain[filenum][10000][2];
 int secondSurfStart[filenum] = {0};// memo starting point of second mount begining
 int viewchanged_flag = 0;
@@ -163,6 +164,7 @@ int mountainPeakNum;
 int addPeakNum;
 int mountnuminteg;
 int layerflag;
+int surfaceinterval;
 
 double getmaxvol()
 {
@@ -337,6 +339,8 @@ void extractSurface(int x, int y, int count, int point_status[])
 		}
 	}
 
+
+
 }
 
 bool triDistinguish(double x1, double x2, double x3, double y1, double y2, double y3, double z1, double z2, double z3)
@@ -434,13 +438,17 @@ double calcIntegration(int pointnum)
 		if( mountain[pointnum][i][0] <= peak_point && mountain[pointnum][i][1] >= peak_point)
 		{
 			if(mountnuminteg == 1)
+			{
 				for( int j = mountain[pointnum][i][0]; j < mountain[pointnum][i][1]; j++)
 					integratedVal += dataview[pointnum][j][1];
+				secondSurfStart[pointnum] = mountain[pointnum][i][1];
+			}
 			else
 			{
 				for(int k = 0; k < mountnuminteg; k++)
 					for( int j = mountain[pointnum][i + k][0]; j < mountain[pointnum][i + k][1]; j++)
 										integratedVal += dataview[pointnum][j + k][1];
+				secondSurfStart[pointnum] = mountain[pointnum][i + mountnuminteg][1];
 			}
 			goto OUT2;
 
@@ -449,33 +457,29 @@ double calcIntegration(int pointnum)
 	return integratedVal;
 }
 
+
 void getSecondSurf()
 {
 	for(int i = 0; i < filenum; i++)
 	{
 		int peakcount = 0;
-		int firstSurfPoint = 0;
-		for(int j = 0; j < 10000; j++)
-			if(point_status_3D[i][j] == 2)
+		for(int j = secondSurfStart[i] + surfaceinterval; j < 10000; j++)
+			if(point_status_3D[i][j] == 2 && peakcount != 0)
 			{
-				if(peakcount == visualize_point[i])
+				if( j < 10000)
 				{
-					firstSurfPoint = j;
-					goto OUT3;
+					visualize_point_second[i] = j;
+					point_status_3D[i][j] = 3;
+					peakcount++;
+
+					break;
 				}
-				peakcount++;
+				else
+					break;
 			}
-
-		OUT3:
-		for(int j = 0; j < 10000;j++)
-			if( mountain[i][j][0] <= firstSurfPoint && mountain[i][j][1] >= firstSurfPoint)
-			{
-				secondSurfStart[i] = mountain[i][j + mountnuminteg + 1][0];
-				break;
-			}
-
 
 	}
+
 }
 
 void makeArray()
@@ -574,6 +578,31 @@ void Draw2d()
 					y_min = distance;
 			}
 		}
+	}
+	else if( viewchanged_flag == 3)
+	{
+		for( int i = 0; i < data_length; i++)
+		{
+			GLdouble x_point = makeDistance(dataview[filecount][i][0]);
+			GLdouble y_point = dataview[filecount][i][1] / colorlange * multnum_y_axis;
+			double distance = makeDistance(dataview[filecount][i][0]);
+
+			if(	distance > z_front && distance < z_back )
+			{
+				glColor3f(1.0, 1.0, 1.0);
+				glVertex2d(x_point, y_point);
+
+				if( secondSurfStart[filecount] <= i)
+						glColor3f(1.0, 0.0, 0.0);
+
+				if(y_point > y_max)
+					y_max = distance;
+				if(y_point < y_min)
+					y_min = distance;
+			}
+		}
+
+
 	}
 	else //for surfaceview and one point view
 	{
@@ -728,11 +757,12 @@ void Draw3d()
 			}
 			else if( radiobuttonVal == 3) //inner view
 			{
-
+				int top_point_count = 0;
 				for(int j = 0; j < data_length; j++)
 				{
-
-					if( j >= secondSurfStart[i] && point_status_3D[i][j] == 2 )
+					if(top_point_count != visualize_point_second[i] && point_status_3D[i][j] == 3 )
+						top_point_count++;
+					else if(top_point_count == visualize_point_second[i] && point_status_3D[i][j] == 3 )
 					{
 						GLdouble z_point = makeDistance(dataview[i][j][0]);
 						if( x_point > x_begin
@@ -750,6 +780,7 @@ void Draw3d()
 
 							glVertex3d(x_point, y_point, z_point);
 						}
+						top_point_count++;
 					}
 				}
 			}
@@ -1134,6 +1165,7 @@ void viewchange_callback(int val)
 	{
 		getSecondSurf();
 	}
+
 	if( radiobuttonVal == 4 || radiobuttonVal == 5)
 	{
 		outlierOmit(point_status_3D);
@@ -1296,7 +1328,10 @@ int main(int argc, char *argv[])
 				glui->add_edittext( "mount num integ", GLUI_EDITTEXT_INT, &mountnuminteg, radiobuttonVal, viewchange_callback);
 			segment_edittext_integmountnum->set_int_limits(0, 10, GLUI_LIMIT_CLAMP);
 			segment_edittext_integmountnum->set_int_val(1);
-
+	GLUI_EditText *segment_edittext_surfaceinterval =
+				glui->add_edittext( "interval for second surface", GLUI_EDITTEXT_INT, &surfaceinterval, radiobuttonVal, viewchange_callback);
+			segment_edittext_surfaceinterval->set_int_limits(0, 5000, GLUI_LIMIT_CLAMP);
+			segment_edittext_surfaceinterval->set_int_val(0);
 
 	GLUI_RadioGroup *radio_button =
 			glui->add_radiogroup(&radiobuttonVal, radiobuttonVal, viewchange_callback);
