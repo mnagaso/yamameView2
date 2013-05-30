@@ -23,9 +23,9 @@ public:
 	double threshold = 0.0;
 	const static int offset_sample_start = 5500;
 	const static int offset_sample_end = 6500;
-	int times = 0; //multiple num of noise lever(average)for make threshold
+	double times = 0; //multiple num of noise lever(average)for make threshold
 
-	ExtractSurface(int timebottom, double data[data_length], int mult_times, int mountainWidth, int peakNum);
+	ExtractSurface(int timebottom, double data[data_length], double mult_times, int mountainWidth, int peakNum);
 	void resetData(double data_in[data_length]);
 	void findMountain();
 	void mountainWidthThreshold();

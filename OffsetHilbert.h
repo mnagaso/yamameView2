@@ -22,6 +22,7 @@ public:
 	double data[data_length];
 	//double data[data_length][data_width];
 	double data2[data_length][data_width];
+	double average;
 
 	OffsetHilbert( double data_in[data_length]);
 	void readData( double dt_in[data_length]);
@@ -33,7 +34,7 @@ public:
 	void resetData();
 
 private:
-	double average;
+
 };
 
 

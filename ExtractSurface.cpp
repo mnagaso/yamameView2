@@ -12,7 +12,7 @@ using std::endl;
 #include "ExtractSurface.h"
 
 
-ExtractSurface::ExtractSurface( int timebottom, double data[data_length], int mult_times, int mountainWidth, int mountPeakNum)
+ExtractSurface::ExtractSurface( int timebottom, double data[data_length], double mult_times, int mountainWidth, int mountPeakNum)
 : sample_end( timebottom )
 {
 	resetData(data);

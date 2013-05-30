@@ -108,6 +108,7 @@ int mountain[filenum][10000][2];
 int secondSurfStart[filenum] = {0};// memo starting point of second mount begining
 int viewchanged_flag = 0;
 double colorlange;
+double noiseLev;
 int reftimebottom;
 #define headerchangenum 1 //the x axe number one before header name changes
 #define thresholdVal spinnerValf
@@ -117,6 +118,8 @@ int reftimebottom;
 #include "Delaunay2D.h"
 std::set<Tercel::Vector> vertices;
 std::set<Tercel::Triangle> triangles;
+std::set<Tercel::Vector> vertices2;
+std::set<Tercel::Triangle> triangles2;
 //double tri_set
 
 //-------varieties for glut-----------
@@ -139,6 +142,8 @@ int x_begin;
 int x_end;
 int y_begin;
 int y_end;
+int y_begin2;
+int y_end2;
 double z_begin;
 double z_end;
 float z_front;
@@ -154,6 +159,7 @@ int sub_y;
 float trans_ary_sub[] = {0.0};
 float trans_aryZ_sub[] = {0.0};
 float brightness;
+float geta;
 int pointsize = 1;
 int radiobuttonVal;
 double peak_threshold;
@@ -165,6 +171,10 @@ int addPeakNum;
 int mountnuminteg;
 int layerflag;
 int surfaceinterval;
+int surfthickness;
+int radiocolorVal;
+float surfAlph;
+double correctVal;
 
 double getmaxvol()
 {
@@ -289,6 +299,7 @@ void readAndHilbert(int xs, int ys, int count)
 			cout << "testing OffsetHilbert..."
 					<< endl;
 			reftimebottom = gettimebottom(); //get the distance to the mounting board from 0,0 data signal
+			noiseLev = test2.average;
 	}
 	//cout << count << endl;
 }
@@ -441,14 +452,16 @@ double calcIntegration(int pointnum)
 			{
 				for( int j = mountain[pointnum][i][0]; j < mountain[pointnum][i][1]; j++)
 					integratedVal += dataview[pointnum][j][1];
-				secondSurfStart[pointnum] = mountain[pointnum][i][1];
+				secondSurfStart[pointnum] = mountain[pointnum][i][1] + surfthickness;
 			}
 			else
 			{
 				for(int k = 0; k < mountnuminteg; k++)
 					for( int j = mountain[pointnum][i + k][0]; j < mountain[pointnum][i + k][1]; j++)
 										integratedVal += dataview[pointnum][j + k][1];
-				secondSurfStart[pointnum] = mountain[pointnum][i + mountnuminteg][1];
+				//secondSurfStart[pointnum] = mountain[pointnum][i + mountnuminteg][1];
+				secondSurfStart[pointnum] = mountain[pointnum][i][1] + surfthickness;
+
 			}
 			goto OUT2;
 
@@ -457,26 +470,43 @@ double calcIntegration(int pointnum)
 	return integratedVal;
 }
 
+double calcIntegSecSurf(int pointnum)
+{
+	double integVal = 0;
+	for(int i = visualize_point_second[pointnum]; i < 10000; i++)
+		if(point_status_3D[pointnum][i] == 3 || point_status_3D[pointnum][i] == 4 )
+			integVal += dataview[pointnum][i][1];
+
+	return integVal;
+}
 
 void getSecondSurf()
 {
 	for(int i = 0; i < filenum; i++)
 	{
 		int peakcount = 0;
-		for(int j = secondSurfStart[i] + surfaceinterval; j < 10000; j++)
-			if(point_status_3D[i][j] == 2 && peakcount != 0)
-			{
-				if( j < 10000)
+		if( secondSurfStart[i] != 0)
+		{
+			int j = 0;
+			for(j = secondSurfStart[i] + surfaceinterval; j < 10000; j++)
+				if(point_status_3D[i][j] == 2)
 				{
-					visualize_point_second[i] = j;
-					point_status_3D[i][j] = 3;
-					peakcount++;
+					//if( j < 10000 && peakcount != 0)
+					if( j < 10000 && peakcount == 0)
+					{
+						visualize_point_second[i] = j;
+						point_status_3D[i][j] = 4; // flag 4 for first peak of second surface
+						peakcount++;
 
-					break;
+						//break;
+					}
+					else if( j < 10000 && peakcount != 0)
+					{
+						point_status_3D[i][j] = 3; // flag 3 for the other peaks of second surf.
+						peakcount++;
+					}
 				}
-				else
-					break;
-			}
+		}
 
 	}
 
@@ -514,26 +544,83 @@ void setColor(double incol, double lancol)
 	//monocolor
 	//lancol = 0.02;
 	lancol *= brightness;
+	double noise = noiseLev / lancol;
+	double unit_width = (1 - noise) / 256;
+	double geta_grad = (geta - 1) / 256; //calc. gradient
 
-	R = incol / lancol;
-	G = incol / lancol;
-	B = incol / lancol;
+	double val = (incol / lancol - noise) +  (1 - (incol / lancol)) / unit_width * geta_grad;
 
-	if(R >= 1.0)
-		R = 1.0;
-	if(G >= 1.0)
-		G = 1.0;
-	if(B >= 1.0)
-		B = 1.0;
+	if(radiocolorVal == 1)
+	{
+		if (val > 0.75)
+		{
+			R = 1.0;
+			G = (1 - val) * 4;
+			B = 0.0;
+		}
+		else if( val > 0.5)
+		{
+			R = (val - 0.5) * 4;
+			G = 1.0;
+			B = 0.0;
+		}
+		else if( val > 0.25)
+		{
+			R = 0.0;
+			G = 1.0;
+			B = 0.5 - val;
+		}
+		else
+		{
+			R = 0.0;
+			G = val * 4;
+			B = 1.0;
+		}
+
+		if(R >= 1.0)
+			R = 1.0;
+		if(G >= 1.0)
+			G = 1.0;
+		if(B >= 1.0)
+			B = 1.0;
+
+		glColor4f(R, G, B, 1.0);
+	}
+	else if( radiocolorVal == 0 && radiobuttonVal == 6)
+	{
+		R = val;
+		G = val;
+		B = val;
+		if(R >= 1.0)
+			R = 1.0;
+		if(G >= 1.0)
+			G = 1.0;
+		if(B >= 1.0)
+			B = 1.0;
+
+		glColor4f(R, G, B, surfAlph);
+	}
+	else
+	{
+		R = val;
+		G = val;
+		B = val;
+		if(R >= 1.0)
+			R = 1.0;
+		if(G >= 1.0)
+			G = 1.0;
+		if(B >= 1.0)
+			B = 1.0;
+		glColor4f(R, G, B, 1.0);
+	}
 
 
-	glColor3f(R, G, B);
 }
 void tri_color(GLdouble a1, GLdouble a2, GLdouble a3)
 {
 	float R,G,B;
 	double ave = (a1 + a2 + a3) / 3;
-	double colmax =
+	//double colmax =
 	R = ave / colorlange;
 	G = ave / colorlange;
 	B = ave / colorlange;
@@ -590,10 +677,10 @@ void Draw2d()
 			if(	distance > z_front && distance < z_back )
 			{
 				glColor3f(1.0, 1.0, 1.0);
-				glVertex2d(x_point, y_point);
-
-				if( secondSurfStart[filecount] <= i)
+				if( i >= secondSurfStart[filecount])
 						glColor3f(1.0, 0.0, 0.0);
+
+				glVertex2d(x_point, y_point);
 
 				if(y_point > y_max)
 					y_max = distance;
@@ -601,8 +688,6 @@ void Draw2d()
 					y_min = distance;
 			}
 		}
-
-
 	}
 	else //for surfaceview and one point view
 	{
@@ -661,7 +746,7 @@ void Draw2d()
 void Draw3d()
 {
 
-	if(radiobuttonVal != 4 && radiobuttonVal != 5)//drawing not for delaunay view
+	if(radiobuttonVal != 4 && radiobuttonVal != 5 && radiobuttonVal != 6)//drawing not for delaunay view
 	{
 		glPointSize(pointsize);
 		glBegin(GL_POINTS);
@@ -760,9 +845,10 @@ void Draw3d()
 				int top_point_count = 0;
 				for(int j = 0; j < data_length; j++)
 				{
-					if(top_point_count != visualize_point_second[i] && point_status_3D[i][j] == 3 )
+					if(visualize_point[i] != top_point_count && point_status_3D[i][j] == 2 )
 						top_point_count++;
-					else if(top_point_count == visualize_point_second[i] && point_status_3D[i][j] == 3 )
+					//if(visualize_point_second[i] == j && point_status_3D[i][j] == 3 )
+					else if(point_status_3D[i][j] == 2 && top_point_count == visualize_point[i])
 					{
 						GLdouble z_point = makeDistance(dataview[i][j][0]);
 						if( x_point > x_begin
@@ -774,7 +860,8 @@ void Draw3d()
 							)
 						{
 							double integCol = calcIntegration(i);
-							setColor( integCol, colorlange);
+							radiocolorVal = 0;
+							setColor( integCol, colorlange * mountnuminteg);
 							if(x_point == sub_x && y_point == sub_y)
 								glColor3f(1.0, 0.0, 0.0);
 
@@ -782,16 +869,39 @@ void Draw3d()
 						}
 						top_point_count++;
 					}
+					else if(point_status_3D[i][j] == 4)
+					{
+						GLdouble z_point = makeDistance(dataview[i][j][0]);
+						if( x_point > x_begin
+							&& x_point < x_end
+							&& y_point > y_begin
+							&& y_point < y_end
+							&& z_point > z_front
+							&& z_point < z_back
+							)
+						{
+							double integCol = calcIntegSecSurf(i);
+							radiocolorVal = 1;
+							setColor( integCol, colorlange * mountnuminteg);
+							if(x_point == sub_x && y_point == sub_y)
+								glColor3f(1.0, 0.0, 0.0);
+
+							glVertex3d(x_point, y_point, z_point);
+						}
+						//top_point_count++;
+					}
 				}
 			}
 		}
 		glEnd();
 	}
-	else if( radiobuttonVal == 4 || radiobuttonVal == 5) // for delaunay view
+	else if( radiobuttonVal == 4 || radiobuttonVal == 5 || radiobuttonVal == 6) // for delaunay view
 	{
 		double zpoint[filenum] = {0.0};// memo z cord. of each surface point
 		double zamp[filenum] = {0.0};//memo z amp at first peak
-		glPointSize(pointsize);
+		double zpoint2[filenum] = {0.0};// memo z cord. of each surface point of second surf.
+		double zamp2[filenum] = {0.0};//memo z amp at first peak of second..
+		//glPointSize(pointsize);
 
 		for( int i = 0; i < filenum; i++)
 		{
@@ -819,8 +929,63 @@ void Draw3d()
 
 
 						zpoint[i] = makeDistance(dataview[i][j][0]);
-						zamp[i] = calcIntegration(i);;
+						zamp[i] = calcIntegration(i);
 						top_point_count++;
+					}
+				}
+				if( radiobuttonVal == 6 && visualize_point_second[i] != 0)
+				{
+					Tercel::Vector v2;
+					v2.x = x_point;
+					v2.y = y_point;
+					vertices2.insert(v2);
+
+					zpoint2[i] = makeDistance(dataview[i][visualize_point_second[i]][0]);
+					zamp2[i] = calcIntegSecSurf(i);
+				}
+			}
+
+		}
+
+		if(radiobuttonVal == 6){
+			Tercel::Delaunay2d::getDelaunayTriangles( vertices2, &triangles2); // Delaunay triangulation invoke
+			typedef std::set<Tercel::Triangle> TriangleSet2;
+			for( TriangleSet2::iterator it2 = triangles2.begin(); it2 != triangles2.end(); ++it2) //draw triangulated triangles
+			{
+				Tercel::Triangle t2 = *it2;
+				int x1 = t2.p1->x;int x2 = t2.p2->x;int x3 = t2.p3->x;
+				int y1 = t2.p1->y;int y2 = t2.p2->y;int y3 = t2.p3->y;
+				int filecount1 = y1 * x_steps + x1;
+				int filecount2 = y2 * x_steps + x2;
+				int filecount3 = y3 * x_steps + x3;
+				GLdouble z1 = zpoint2[filecount1];
+				GLdouble z2 = zpoint2[filecount2];
+				GLdouble z3 = zpoint2[filecount3];
+				GLdouble amp1 = zamp2[filecount1];
+				GLdouble amp2 = zamp2[filecount2];
+				GLdouble amp3 = zamp2[filecount3];
+
+				if(z1 != 0 && z2 != 0 && z3 != 0
+						&& z1 > z_front && z2 > z_front && z3 > z_front
+						&& z1 < z_back && z2 < z_back && z3 < z_back
+						&& y1 > y_begin2 && y2 > y_begin2 && y3 > y_begin2
+						&& y1 < y_end2 && y2 < y_end2 && y3 < y_end2)
+				{
+					if(triDistinguish(x1,x2,x3,y1,y2,y3,z1,z2,z3) == 0){
+						//tri_color(amp1, amp2, amp3);
+						//glEnable(GL_BLEND);
+						glBegin(GL_TRIANGLES);
+						radiocolorVal = 1;
+						setColor(amp1, colorlange );
+						glVertex3d(x1, y1, z1);
+						radiocolorVal = 1;
+						setColor(amp2, colorlange);
+						glVertex3d(x2, y2, z2);
+						radiocolorVal = 1;
+						setColor(amp3, colorlange);
+						glVertex3d(x3, y3, z3);
+						glEnd();
+						//glDisable(GL_BLEND);
 					}
 				}
 			}
@@ -844,7 +1009,9 @@ void Draw3d()
 			GLdouble amp2 = zamp[filecount2];
 			GLdouble amp3 = zamp[filecount3];
 
-			if(z1 != 0 && z2 != 0 && z3 != 0)
+			if(z1 != 0 && z2 != 0 && z3 != 0
+					&& z1 > z_front && z2 > z_front && z3 > z_front
+					&& z1 < z_back && z2 < z_back && z3 < z_back)
 			{
 				if(triDistinguish(x1,x2,x3,y1,y2,y3,z1,z2,z3) == 0){
 					//tri_color(amp1, amp2, amp3);
@@ -852,11 +1019,11 @@ void Draw3d()
 					if( radiobuttonVal == 4)
 					{
 						glBegin(GL_TRIANGLES);
-						setColor(amp1, colorlange);
+						setColor(amp1, colorlange * mountnuminteg);
 						glVertex3d(x1, y1, z1);
-						setColor(amp2, colorlange);
+						setColor(amp2, colorlange * mountnuminteg);
 						glVertex3d(x2, y2, z2);
-						setColor(amp3, colorlange);
+						setColor(amp3, colorlange * mountnuminteg);
 						glVertex3d(x3, y3, z3);
 						glEnd();
 					}
@@ -869,9 +1036,24 @@ void Draw3d()
 						glVertex3d(x1, y1, z1);
 						glEnd();
 					}
+					else if( radiobuttonVal == 6)
+					{
+						glBegin(GL_TRIANGLES);
+						radiocolorVal = 0;
+						setColor(amp1, colorlange * mountnuminteg);
+						glVertex3d(x1, y1, z1);
+						radiocolorVal = 0;
+						setColor(amp2, colorlange * mountnuminteg);
+						glVertex3d(x2, y2, z2);
+						radiocolorVal = 0;
+						setColor(amp3, colorlange * mountnuminteg);
+						glVertex3d(x3, y3, z3);
+						glEnd();
+					}
 				}
 			}
 		}
+
 	}
 
 
@@ -893,6 +1075,10 @@ void display()
 	glMultMatrixf( rotary );
 
 	//Draw2d();
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
 	Draw3d();
 	glPopMatrix();
 
@@ -928,7 +1114,7 @@ void funcResetSub(int num)
 void init()
 {
 	glClearColor(0.0, 0.0, 0.0, 1.0);
-	glEnable(GL_DEPTH_TEST | GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST | GL_CULL_FACE );
 	glCullFace(GL_BACK);
 
 }
@@ -976,6 +1162,7 @@ void resize( GLsizei w, GLsizei h)
 
 void Init()
 {
+
 	glutInitWindowPosition(0,0);
 	glutInitWindowSize(1000,1000);
 }
@@ -1144,10 +1331,15 @@ void viewchange_callback(int val)
 		cout << "delaunay view" << endl;
 		viewchanged_flag = 4;
 	}
-	else
+	else if( radiobuttonVal == 5)
 	{
 		cout << "delaunay wire" << endl;
 		viewchanged_flag = 5;
+	}
+	else
+	{
+		cout << "mult layer delaunay" << endl;
+		viewchanged_flag = 6;
 	}
 
 
@@ -1161,12 +1353,12 @@ void viewchange_callback(int val)
 			point_status_3D[i][j] = point_status[j];
 	}
 
-	if( radiobuttonVal == 3)// extract second surface
+	if( radiobuttonVal == 3 || radiobuttonVal == 6)// extract second surface
 	{
 		getSecondSurf();
 	}
 
-	if( radiobuttonVal == 4 || radiobuttonVal == 5)
+	if( radiobuttonVal == 4 || radiobuttonVal == 5 || radiobuttonVal == 6)
 	{
 		outlierOmit(point_status_3D);
 	}
@@ -1178,10 +1370,10 @@ void viewchange_callback(int val)
 
 void modifyPeak_callback(int val)
 {
-	//int modfilenum = sub_x + sub_y * x_steps;
+	int modfilenum = sub_x + sub_y * x_steps;
 
-	//if(visualize_point[modfilenum] != addPeakNum)
-			//visualize_point[modfilenum] = addPeakNum;
+	if(visualize_point[modfilenum] != addPeakNum)
+			visualize_point[modfilenum] = addPeakNum;
 
 	viewchange_callback(radiobuttonVal);
 
@@ -1226,7 +1418,7 @@ int main(int argc, char *argv[])
 
 	//initiation GLUT
 	glutInit(&argc, argv);//initialize OpenGL environment
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);//double buffering
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH );//double buffering
 
 	//funcs for main_window
 	Init();
@@ -1298,7 +1490,11 @@ int main(int argc, char *argv[])
 	GLUI_EditText *segment_edittext_brightness =
 				glui->add_edittext( "brightness", GLUI_EDITTEXT_FLOAT, &brightness);
 		segment_edittext_brightness->set_float_limits( 0.0, 1000.0, GLUI_LIMIT_CLAMP);
-		segment_edittext_brightness->set_float_val(0.04);
+		segment_edittext_brightness->set_float_val(1.0);
+	GLUI_EditText *segment_edittext_geta =
+				glui->add_edittext( "geta", GLUI_EDITTEXT_FLOAT, &geta);
+		segment_edittext_geta->set_float_limits( 1, 100.0, GLUI_LIMIT_CLAMP);
+		segment_edittext_geta->set_float_val(1.0);
 	GLUI_EditText *segment_edittext_point =
 				glui->add_edittext( "point size", GLUI_EDITTEXT_INT, &pointsize);
 		segment_edittext_point->set_int_limits( 0, 10000, GLUI_LIMIT_CLAMP);
@@ -1326,12 +1522,16 @@ int main(int argc, char *argv[])
 	//set a number for calc. integration val. of peak and its neighbor
 	GLUI_EditText *segment_edittext_integmountnum =
 				glui->add_edittext( "mount num integ", GLUI_EDITTEXT_INT, &mountnuminteg, radiobuttonVal, viewchange_callback);
-			segment_edittext_integmountnum->set_int_limits(0, 10, GLUI_LIMIT_CLAMP);
+			segment_edittext_integmountnum->set_int_limits(1, 10, GLUI_LIMIT_CLAMP);
 			segment_edittext_integmountnum->set_int_val(1);
 	GLUI_EditText *segment_edittext_surfaceinterval =
 				glui->add_edittext( "interval for second surface", GLUI_EDITTEXT_INT, &surfaceinterval, radiobuttonVal, viewchange_callback);
 			segment_edittext_surfaceinterval->set_int_limits(0, 5000, GLUI_LIMIT_CLAMP);
 			segment_edittext_surfaceinterval->set_int_val(0);
+	GLUI_EditText *segment_edittext_surface_thickness =
+					glui->add_edittext( "surface thickness", GLUI_EDITTEXT_INT, &surfthickness, radiobuttonVal, viewchange_callback);
+				segment_edittext_surface_thickness->set_int_limits(0, 5000, GLUI_LIMIT_CLAMP);
+				segment_edittext_surface_thickness->set_int_val(300);
 
 	GLUI_RadioGroup *radio_button =
 			glui->add_radiogroup(&radiobuttonVal, radiobuttonVal, viewchange_callback);
@@ -1341,6 +1541,33 @@ int main(int argc, char *argv[])
 		glui->add_radiobutton_to_group(radio_button, "inner view");
 		glui->add_radiobutton_to_group(radio_button, "delaunay view");
 		glui->add_radiobutton_to_group(radio_button, "delaunay wire");
+		glui->add_radiobutton_to_group(radio_button, "mult. delaunay");
+
+
+		//-------sub window-----------
+	glui2->add_separator();
+	GLUI_RadioGroup *radio_color =
+			glui2->add_radiogroup(&radiocolorVal, radiobuttonVal, viewchange_callback);
+		glui2->add_radiobutton_to_group(radio_color, "mono");
+		glui2->add_radiobutton_to_group(radio_color, "color");
+	GLUI_EditText *segment_alpha =
+					glui->add_edittext( "surface alpha val ", GLUI_EDITTEXT_FLOAT, &surfAlph, radiobuttonVal, viewchange_callback);
+			segment_alpha->set_float_limits( 0.0, 1.0, GLUI_LIMIT_CLAMP);
+			segment_alpha->set_float_val(0.5);
+	GLUI_EditText *segment_surfcorrect =
+						glui->add_edittext( "surface correction", GLUI_EDITTEXT_FLOAT, &correctVal, radiobuttonVal, viewchange_callback);
+				segment_surfcorrect->set_float_limits( 0.001, 100.0, GLUI_LIMIT_CLAMP);
+				segment_surfcorrect->set_float_val(1.0);
+	GLUI_EditText *segment_edittext_ymin2 =
+				glui2->add_edittext( "y_min", GLUI_EDITTEXT_INT, &y_begin2);
+		segment_edittext_ymin2->set_int_limits( 0, y_steps, GLUI_LIMIT_CLAMP);
+		segment_edittext_ymin2->set_int_val(0);
+		GLUI_EditText *segment_edittext_ymax2 =
+				glui2->add_edittext( "y_max", GLUI_EDITTEXT_INT, &y_end2);
+		segment_edittext_ymax2->set_int_limits( 0, y_steps, GLUI_LIMIT_CLAMP);
+		segment_edittext_ymax2->set_int_val(y_steps);
+
+	glui2->add_separator();
 
 	//controls for 2D view
 	GLUI_EditText *segment_edittext_sub_x =
@@ -1360,7 +1587,7 @@ int main(int argc, char *argv[])
 	glui->add_separator();
 	//modification panels
 	GLUI_EditText *segment_edittext_addpoint =
-			glui2->add_edittext( "add peak num for visualizing", GLUI_EDITTEXT_INT, &visualize_point[sub_x + sub_y * x_steps], 0, modifyPeak_callback);
+			glui2->add_edittext( "add peak num for visualizing", GLUI_EDITTEXT_INT, &addPeakNum, 0, modifyPeak_callback);
 		segment_edittext_addpoint->set_int_limits(0, 100, GLUI_LIMIT_CLAMP);
 		segment_edittext_addpoint->set_int_val(0);
 
