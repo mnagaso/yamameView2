@@ -32,9 +32,9 @@ using std::string;
 #define eleNum 10000 //numbers of value in each file
 #define ignore 2000 //points ignored
 #define sonicvelo 1500 //onsoku m/s
-#define filepath "/var/run/media/nagaso/sotoHD/iwana/2/" //"./data/"
+//#define filepath "/var/run/media/nagaso/sotoHD/iwana/2/" //"./data/"
 //#define filepath "/var/run/media/nagaso/sotoHD/yamame/1/"
-//#define filepath "/var/run/media/nagaso/sotoHD/rotate2/"
+#define filepath "/var/run/media/nagaso/sotoHD/rotate2/"
 //#define filepath "/var/run/media/nagaso/sotoHD/rotato/"
 //#define filepath "./data/"
 

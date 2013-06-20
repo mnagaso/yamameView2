@@ -20,10 +20,17 @@ public:
 	int wrflag;
 	int xs, xe, ys, ye;
 	float zs, ze;
-	int mounWid, peakNum;
 	float tri_thre, tri_leng;
 	int v_point[10000];
-	InitialSettingWR(int , int , int , int , int, float, float, int, int, float, float, int , int[] , const string&);
+	int mountnuminteg;
+	int surfaceinterval;
+	int surfthickness;
+	float surfAlph;
+	double correctVal;
+	float brightness;
+	float geta;
+	float spinnerSurfVal;
+	InitialSettingWR(int , int , int , int , int, float, float, float, float, int , int[] , const string&, int, int, int, float, double, float, float, float);
 private:
 
 

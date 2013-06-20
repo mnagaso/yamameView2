@@ -32,9 +32,9 @@ using std::endl;
 #include "InitialSettingWR.h"
 
 //#define filepath "./data/"
-#define filepath "/var/run/media/nagaso/sotoHD/iwana/2/"
+//#define filepath "/var/run/media/nagaso/sotoHD/iwana/2/"
 //#define filepath "/var/run/media/nagaso/sotoHD/yamame/1/"
-//#define filepath "/var/run/media/nagaso/sotoHD/rotate2/"
+#define filepath "/var/run/media/nagaso/sotoHD/rotate2/"
 //#define filepath "/var/run/media/nagaso/sotoHD/rotato/"
 #define data_width 2
 #define data_length 10000
@@ -45,9 +45,9 @@ using std::endl;
 //#define x_steps 158
 //#define y_steps 41
 //iwana2
-#define fishname "iwana2"
-#define x_steps 157
-#define y_steps 35
+//#define fishname "iwana2"
+//#define x_steps 157
+//#define y_steps 35
 //iwana3
 //#define fishname "iwana3"
 //#define x_steps 137
@@ -83,18 +83,18 @@ using std::endl;
 //#define y_steps 41
 
 //rotate2
-//#define fishname "rotate2"
-//#define x_steps 21
-//#define y_steps 76
+#define fishname "rotate2"
+#define x_steps 21
+#define y_steps 76
 //rotate
 //#define fishname "rotato"
-//#define x_steps 16
-//#define y_steps 156
+//#define x_steps 21
+//#define y_steps 155
 
 #define filenum x_steps * y_steps
 
 #define sonicvelo 1500 //onsoku m/s
-#define ini_ignore 4000 //for coloring
+//#define ini_ignore 4000 //for coloring
 
 
 vector<direct *> entries;
@@ -110,7 +110,7 @@ int viewchanged_flag = 0;
 double colorlange;
 double noiseLev;
 int reftimebottom;
-#define headerchangenum 1 //the x axe number one before header name changes
+//#define headerchangenum 1 //the x axe number one before header name changes
 #define thresholdVal spinnerValf
 
 
@@ -218,7 +218,6 @@ double gettimemin()
 
 	return volmin;
 }
-
 int gettimebottom()
 {
 	double valmax = 0;
@@ -233,12 +232,10 @@ int gettimebottom()
 
 	return timebottom;
 }
-
 double makeDistance( double time )
 {
 	return time * sonicvelo * 1000 / 2;
 }
-
 void readOnly(int xs, int ys, int count)
 {
 	bool headerflag = 0;
@@ -252,7 +249,6 @@ void readOnly(int xs, int ys, int count)
 		dataview[count][k][1] = test.data[k][1];
 	}
 }
-
 double matchingAmpFunc(double data0[data_length], double (*data1)[data_width])
 {
 	double max_0, max_1;
@@ -269,7 +265,6 @@ double matchingAmpFunc(double data0[data_length], double (*data1)[data_width])
 	ratio = max_1 / max_0;
 	return ratio;
 }
-
 void readAndHilbert(int xs, int ys, int count)
 {
 
@@ -303,7 +298,6 @@ void readAndHilbert(int xs, int ys, int count)
 	}
 	//cout << count << endl;
 }
-
 void calcImpedance()
 {
 	double imp; //impedance
@@ -320,7 +314,6 @@ void calcImpedance()
 				cout << "imp " << imp << endl;
 		}
 }
-
 void extractSurface(int x, int y, int count, int point_status[])
 {
 	double temp[data_length];
@@ -349,11 +342,7 @@ void extractSurface(int x, int y, int count, int point_status[])
 				mountain[count][i][j] = 0;
 		}
 	}
-
-
-
 }
-
 bool triDistinguish(double x1, double x2, double x3, double y1, double y2, double y3, double z1, double z2, double z3)
 {
 	double crossProduct = sqrt(((y1 - y3)*(z2 - z3) - (z1 - z3)*(y2 - y3)) * ((y1 - y3)*(z2 - z3) - (z1 - z3)*(y2 - y3))
@@ -373,7 +362,6 @@ bool triDistinguish(double x1, double x2, double x3, double y1, double y2, doubl
 	else
 		return 1;
 }
-
 void outlierOmit(int points[filenum][10000])
 {
 	for(int i = 0; i < x_steps; i++)
@@ -422,13 +410,10 @@ void outlierOmit(int points[filenum][10000])
 							k++;
 						}
 					}
-
 			}
 		}
-
 	}
 }
-
 double calcIntegration(int pointnum)
 {
 	int peak_point =0;
@@ -469,7 +454,6 @@ double calcIntegration(int pointnum)
 	OUT2:
 	return integratedVal;
 }
-
 double calcIntegSecSurf(int pointnum)
 {
 	double integVal = 0;
@@ -479,7 +463,6 @@ double calcIntegSecSurf(int pointnum)
 
 	return integVal;
 }
-
 void getSecondSurf()
 {
 	for(int i = 0; i < filenum; i++)
@@ -507,11 +490,8 @@ void getSecondSurf()
 					}
 				}
 		}
-
 	}
-
 }
-
 void makeArray()
 {
 	int count = 0;
@@ -534,8 +514,6 @@ void makeArray()
 	colorlange = getmaxvol();
 	cout << "max_vol..." << colorlange << endl;
 }
-
-
 //----------------------------functions for indicate main_window-----------------------------------------
 void setColor(double incol, double lancol)
 {
@@ -613,14 +591,11 @@ void setColor(double incol, double lancol)
 			B = 1.0;
 		glColor4f(R, G, B, 1.0);
 	}
-
-
 }
 void tri_color(GLdouble a1, GLdouble a2, GLdouble a3)
 {
 	float R,G,B;
 	double ave = (a1 + a2 + a3) / 3;
-	//double colmax =
 	R = ave / colorlange;
 	G = ave / colorlange;
 	B = ave / colorlange;
@@ -632,10 +607,8 @@ void tri_color(GLdouble a1, GLdouble a2, GLdouble a3)
 	if(B >= 1.0)
 		B = 1.0;
 
-
 	glColor3f(R, G, B);
 }
-
 void Draw2d()
 {
 	int multnum_y_axis = 100;
@@ -644,7 +617,6 @@ void Draw2d()
 	double y_min, y_max;
 	int filecount = sub_y * x_steps + sub_x;
 
-	//extractSurface(sub_x, sub_y, filecount, peak_place);
 	glPointSize(1.0);
 	glBegin(GL_POINTS);
 	if(viewchanged_flag == 0)// drawing for pointview
@@ -742,10 +714,8 @@ void Draw2d()
 	glEnd();
 
 }
-
 void Draw3d()
 {
-
 	if(radiobuttonVal != 4 && radiobuttonVal != 5 && radiobuttonVal != 6)//drawing not for delaunay view
 	{
 		glPointSize(pointsize);
@@ -777,7 +747,6 @@ void Draw3d()
 							&& z_point < z_back
 						)
 					{
-
 						setColor( dataview[i][j][1], colorlange);
 						if(x_point == sub_x && y_point == sub_y)
 							glColor3f(1.0, 0.0, 0.0);
@@ -1383,21 +1352,30 @@ void settingWR_callback( int val)
 {
 	if(val == 0)
 	{
-		InitialSettingWR W(val, x_begin, x_end, y_begin, y_end, z_front, z_back, mountainWidth, mountainPeakNum, tri_threshold, tri_length, filenum, visualize_point, fishname);
+		//InitialSettingWR W(val, x_begin, x_end, y_begin, y_end, z_front, z_back, mountainWidth, mountainPeakNum, tri_threshold, tri_length, filenum, visualize_point, fishname);
+		InitialSettingWR W(val, x_begin, x_end, y_begin, y_end, z_front, z_back, tri_threshold, tri_length, filenum, visualize_point, fishname, mountnuminteg, surfaceinterval, surfthickness, surfAlph, correctVal, brightness, geta, spinnerSurfVal);
 	}
 	else
 	{
-		InitialSettingWR R(val, x_begin, x_end, y_begin, y_end, z_front, z_back, mountainWidth, mountainPeakNum, tri_threshold, tri_length, filenum, visualize_point, fishname);
+		//InitialSettingWR R(val, x_begin, x_end, y_begin, y_end, z_front, z_back, mountainWidth, mountainPeakNum, tri_threshold, tri_length, filenum, visualize_point, fishname);
+		InitialSettingWR R(val, x_begin, x_end, y_begin, y_end, z_front, z_back, tri_threshold, tri_length, filenum, visualize_point, fishname, mountnuminteg, surfaceinterval, surfthickness, surfAlph, correctVal, brightness, geta, spinnerSurfVal);
 		x_begin = R.xs;
 		x_end = R.xe;
 		y_begin = R.ys;
 		y_end = R.ye;
 		z_front = R.zs;
 		z_back = R.ze;
-		mountainWidth = R.mounWid;
-		mountainPeakNum = R.peakNum;
 		tri_threshold = R.tri_thre;
 		tri_length = R.tri_leng;
+		mountnuminteg = R.mountnuminteg;
+		surfaceinterval = R.surfaceinterval;
+		surfthickness = R.surfthickness;
+		surfAlph = R.surfAlph;
+		correctVal = R.correctVal;
+		brightness = R.brightness;
+		geta = R.geta;
+		spinnerSurfVal = R.spinnerSurfVal;
+
 		for(int i = 0; i < filenum; i++)
 			visualize_point[i] = R.v_point[i];
 
@@ -1441,6 +1419,7 @@ int main(int argc, char *argv[])
 	//controls for 3D view
 	GLUI *glui = GLUI_Master.create_glui("control", 0);
 	GLUI *glui2 = GLUI_Master.create_glui("control_subwindow", 0);
+	GLUI *glui3 = GLUI_Master.create_glui("control_color", 0);
 	GLUI_Rotation *view_rot = glui->add_rotation("Rotation", rotary);
 		glui->add_button("rot_reset", 0, funcReset);
 	GLUI_EditText *segment_edittext_rot_deg =
@@ -1488,11 +1467,11 @@ int main(int argc, char *argv[])
 	segment_edittext_zmax->set_float_limits( 0.0, 100.0, GLUI_LIMIT_CLAMP);
 	segment_edittext_zmax->set_float_val(35);
 	GLUI_EditText *segment_edittext_brightness =
-				glui->add_edittext( "brightness", GLUI_EDITTEXT_FLOAT, &brightness);
+				glui3->add_edittext( "brightness", GLUI_EDITTEXT_FLOAT, &brightness);
 		segment_edittext_brightness->set_float_limits( 0.0, 1000.0, GLUI_LIMIT_CLAMP);
 		segment_edittext_brightness->set_float_val(1.0);
 	GLUI_EditText *segment_edittext_geta =
-				glui->add_edittext( "geta", GLUI_EDITTEXT_FLOAT, &geta);
+				glui3->add_edittext( "geta", GLUI_EDITTEXT_FLOAT, &geta);
 		segment_edittext_geta->set_float_limits( 1, 100.0, GLUI_LIMIT_CLAMP);
 		segment_edittext_geta->set_float_val(1.0);
 	GLUI_EditText *segment_edittext_point =
@@ -1504,11 +1483,11 @@ int main(int argc, char *argv[])
 		segment_spinner_surface->set_float_limits(0.0, 10000.0, GLUI_LIMIT_CLAMP);
 		segment_spinner_surface->set_float_val(6.0);
 	GLUI_EditText *segment_edittext_mountwidth =
-			glui->add_edittext( "mount w threshold", GLUI_EDITTEXT_INT, &mountainWidth, radiobuttonVal, viewchange_callback);
+			glui->add_edittext( "**useless**mount w threshold", GLUI_EDITTEXT_INT, &mountainWidth, radiobuttonVal, viewchange_callback);
 		segment_edittext_mountwidth->set_int_limits(0, 10000, GLUI_LIMIT_CLAMP);
 		segment_edittext_mountwidth->set_int_val(0);
 	GLUI_EditText *segment_edittext_mountPeakNum =
-			glui->add_edittext( "mount peak num threshold", GLUI_EDITTEXT_INT, &mountainPeakNum, radiobuttonVal, viewchange_callback);
+			glui->add_edittext( "**useless**mount peak num threshold", GLUI_EDITTEXT_INT, &mountainPeakNum, radiobuttonVal, viewchange_callback);
 		segment_edittext_mountPeakNum->set_int_limits(0, 10000, GLUI_LIMIT_CLAMP);
 		segment_edittext_mountPeakNum->set_int_val(0);
 	GLUI_EditText *segment_tri_threshold =
@@ -1545,17 +1524,17 @@ int main(int argc, char *argv[])
 
 
 		//-------sub window-----------
-	glui2->add_separator();
+	glui3->add_separator();
 	GLUI_RadioGroup *radio_color =
-			glui2->add_radiogroup(&radiocolorVal, radiobuttonVal, viewchange_callback);
-		glui2->add_radiobutton_to_group(radio_color, "mono");
-		glui2->add_radiobutton_to_group(radio_color, "color");
+			glui3->add_radiogroup(&radiocolorVal, radiobuttonVal, viewchange_callback);
+		glui3->add_radiobutton_to_group(radio_color, "mono");
+		glui3->add_radiobutton_to_group(radio_color, "color");
 	GLUI_EditText *segment_alpha =
-					glui->add_edittext( "surface alpha val ", GLUI_EDITTEXT_FLOAT, &surfAlph, radiobuttonVal, viewchange_callback);
+					glui3->add_edittext( "surface alpha val ", GLUI_EDITTEXT_FLOAT, &surfAlph, radiobuttonVal, viewchange_callback);
 			segment_alpha->set_float_limits( 0.0, 1.0, GLUI_LIMIT_CLAMP);
 			segment_alpha->set_float_val(0.5);
 	GLUI_EditText *segment_surfcorrect =
-						glui->add_edittext( "surface correction", GLUI_EDITTEXT_FLOAT, &correctVal, radiobuttonVal, viewchange_callback);
+						glui3->add_edittext( "surface correction", GLUI_EDITTEXT_FLOAT, &correctVal, radiobuttonVal, viewchange_callback);
 				segment_surfcorrect->set_float_limits( 0.001, 100.0, GLUI_LIMIT_CLAMP);
 				segment_surfcorrect->set_float_val(1.0);
 	GLUI_EditText *segment_edittext_ymin2 =

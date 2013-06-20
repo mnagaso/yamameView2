@@ -23,8 +23,9 @@ using std::string;
 #include "InitialSettingWR.h"
 
 InitialSettingWR::InitialSettingWR(int flag, int xstart, int xend, int ystart, int yend,
-									float zstart, float zend, int mountWidth, int mountPeakNum,
-									float trithre, float trileng,  int fn, int vispoint[10000], const string& fishname )
+									float zstart, float zend,
+									float trithre, float trileng,  int fn, int vispoint[10000], const string& fishname,
+									int mni, int siv, int stn, float sA, double cV, float bn, float gt, float ssv)
 {
 	if(flag == 0)
 	{
@@ -35,11 +36,17 @@ InitialSettingWR::InitialSettingWR(int flag, int xstart, int xend, int ystart, i
 		ye = yend;
 		zs = zstart;
 		ze = zend;
-		mounWid = mountWidth;
-		peakNum = mountPeakNum;
 		tri_thre = trithre;
 		tri_leng = trileng;
 		int filenum = fn;
+		mountnuminteg = mni;
+		surfaceinterval = siv;
+		surfthickness = stn;
+		surfAlph = sA;
+		correctVal = cV;
+		brightness = bn;
+		geta = gt;
+		spinnerSurfVal = ssv;
 		writeSetting( filenum, vispoint, fishname);
 	}
 	else
@@ -61,10 +68,16 @@ void InitialSettingWR::writeSetting( int fn, int vpoint[], string fname)
 			<< ye << endl
 			<< zs << endl
 			<< ze << endl
-			<< mounWid << endl
-			<< peakNum << endl
 			<< tri_thre << endl
-			<< tri_leng << endl;
+			<< tri_leng << endl
+			<< mountnuminteg << endl
+			<< surfaceinterval << endl
+			<< surfthickness << endl
+			<< surfAlph << endl
+			<< correctVal << endl
+			<< brightness << endl
+			<< geta << endl
+			<< spinnerSurfVal << endl;
 
 	for( int i = 0; i < fn; i++)
 		ofs << vpoint[fn] << endl;
@@ -92,16 +105,28 @@ void InitialSettingWR::readSetting(string fn, int fnum)
 	getline(ifs, str);
 	ze = atof(str.c_str());
 
-	getline(ifs, str);
-	mounWid = atoi(str.c_str());
-	getline(ifs, str);
-	peakNum = atoi(str.c_str());
 
 	getline(ifs, str);
 	tri_thre = atof(str.c_str());
 	getline(ifs, str);
 	tri_leng = atof(str.c_str());
 
+	getline(ifs, str);
+	mountnuminteg = atoi(str.c_str());
+	getline(ifs, str);
+	surfaceinterval = atoi(str.c_str());
+	getline(ifs, str);
+	surfthickness = atoi(str.c_str());
+	getline(ifs, str);
+	surfAlph = atof(str.c_str());
+	getline(ifs, str);
+	correctVal = atof(str.c_str());
+	getline(ifs, str);
+	brightness = atof(str.c_str());
+	getline(ifs, str);
+	geta = atof(str.c_str());
+	getline(ifs, str);
+	spinnerSurfVal = atof(str.c_str());
 	for(int i = 0; i < fnum; i++)
 	{
 		getline(ifs, str);
