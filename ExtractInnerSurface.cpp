@@ -66,7 +66,7 @@ void ExtractInnerSurface::mountainNumbering()
 			}
 			else if(i + 1 == sample_end && point_status[i] == 1)
 			{
-				mountain_place[mountain_count][1] = i;
+				mountain_place[mountain_count][1] = i;//i - 1?
 				mountain_count++;
 			}
 		}
@@ -106,7 +106,7 @@ void ExtractInnerSurface::extractPeak()
 		for( int i = 0; i < mountain_num; i++)
 			for( int j = mountain_place[i][0]; j < mountain_place[i][1]; j++)
 			{
-				if(data_sample[j] - data_sample[j - 1] >= 0 && data_sample[j + 1] - data_sample[j] < 0)
+				if(data_sample[j] - data_sample[j - 1] > 0 && data_sample[j + 1] - data_sample[j] < 0)
 				{
 					peak_place[peak_count] = j;
 					point_status[j] = 2;

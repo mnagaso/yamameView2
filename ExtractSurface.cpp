@@ -142,7 +142,7 @@ void ExtractSurface::eraceNoisePeak()
 double ExtractSurface::calcAverage()
 {
 	//double temp_sum = 0;
-	int calc_width = 1000;
+	int calc_width = 1000;//magic number
 	int calc_times = (int)data_length/calc_width;
 	double temp_average[ calc_times];
 	double temp_amount;

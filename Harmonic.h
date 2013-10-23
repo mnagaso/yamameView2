@@ -1,17 +1,16 @@
 /*
- * OffsetHilbert.h
+ * harmonic.h
  *
- *  Created on: 2013/03/02
- *      Author: mnsaru
+ *  Created on: Sep 10, 2013
+ *      Author: nagaso
  */
 
-#ifndef OFFSETHILBERT_H_
-#define OFFSETHILBERT_H_
-
+#ifndef HARMONIC_H_
+#define HARMONIC_H_
 
 #include <fftw3.h>
 
-class OffsetHilbert
+class Harmonic
 {
 public:
 	const static int data_width = 2;
@@ -27,7 +26,7 @@ public:
 	double average;
 	//#define  extern fishname //from iwashiView.cpp
 
-	OffsetHilbert( double data_in[data_length]);
+	Harmonic( double data_in[data_length]);
 	void readData( double dt_in[data_length]);
 	double calcAverage();
 	void offset();
@@ -41,4 +40,4 @@ private:
 };
 
 
-#endif /* OFFSETHILBERT_H_ */
+#endif /* HARMONIC_H_ */

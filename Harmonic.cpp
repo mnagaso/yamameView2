@@ -1,8 +1,8 @@
 /*
- * OffsetHilbert.cpp
+ * Harmonic.cpp
  *
- *  Created on: 2013/03/02
- *      Author: mnsaru
+ *  Created on: Sep 10, 2013
+ *      Author: nagaso
  */
 
 #include <iostream>
@@ -15,10 +15,10 @@ using std::endl;
 #include <string>
 using std::string;
 #include <math.h>
-#include "OffsetHilbert.h"
+#include "Harmonic.h"
 
 
-OffsetHilbert::OffsetHilbert(double data_in[data_length] )
+Harmonic::Harmonic(double data_in[data_length] )
 {
 	resetData();
 	//cout << data2[100][0] << endl;
@@ -30,23 +30,23 @@ OffsetHilbert::OffsetHilbert(double data_in[data_length] )
 	int flag = -1;
 	FFT(flag);
 
-	windowFunc();
-	flag = 1;
-	FFT(flag);
+	//windowFunc();
+	//flag = 1;
+	//FFT(flag);
 
-	getEnvelope();
+	//getEnvelope();
 
 
 	//resetData();
 }
 
-void OffsetHilbert::readData(double dt_in[data_length])
+void Harmonic::readData(double dt_in[data_length])
 {
 	for(int i = 0; i < data_length; i++)
 		data[i] = dt_in[i];
 }
 
-void OffsetHilbert::resetData()
+void Harmonic::resetData()
 {
 	for(int i = 0; i < data_length; i++)
 		for(int j = 0; j < data_width; j++)
@@ -54,7 +54,7 @@ void OffsetHilbert::resetData()
 
 }
 
-double OffsetHilbert::calcAverage()
+double Harmonic::calcAverage()
 {
 	int calc_width = 1000;//magic number
 		int calc_times = (int)data_length/calc_width;
@@ -80,7 +80,7 @@ double OffsetHilbert::calcAverage()
 		return temp_small;
 }
 
-void OffsetHilbert::offset()
+void Harmonic::offset()
 {
 	/*
 	if( average >= 0)
@@ -94,7 +94,7 @@ void OffsetHilbert::offset()
 		data[i] -= average;
 }
 
-void OffsetHilbert::FFT( int flag)
+void Harmonic::FFT( int flag)
 {
 	fftw_complex *in, *out;
 	fftw_plan p;
@@ -129,7 +129,7 @@ void OffsetHilbert::FFT( int flag)
 
 }
 
-void OffsetHilbert::windowFunc()
+void Harmonic::windowFunc()
 {
 	/*
 	double buffer;
@@ -158,7 +158,7 @@ void OffsetHilbert::windowFunc()
 	}
 }
 
-void OffsetHilbert::getEnvelope()
+void Harmonic::getEnvelope()
 {
 	for(int i = 0; i < data_length; i++)
 		data2[i][1] = sqrt( data2[i][0] * data2[i][0] + data2[i][1] * data2[i][1]) / data_length; //normalize
@@ -167,3 +167,6 @@ void OffsetHilbert::getEnvelope()
 	//cout << data2[1][1] << endl;
 
 }
+
+
+

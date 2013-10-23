@@ -19,6 +19,7 @@ namespace Tercel
   struct Vector {
     double x;
     double y;
+    //double amp;//reflection signal strength
 
     // ======================================
     // 等価性の判定

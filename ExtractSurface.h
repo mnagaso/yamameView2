@@ -12,7 +12,8 @@ class ExtractSurface
 {
 public:
 	const static int data_length = 10000;
-	const static int sample_start = 1138;
+	//const static int sample_start = 1138;
+	const static int sample_start = 1300;//for rotate
 	double data_sample[data_length];
 	int mountain_place[10000][2];//[mountain_num][in or out]
 	int point_status[10000];
